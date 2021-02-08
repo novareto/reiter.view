@@ -33,10 +33,23 @@ class View:
         return Response.create(code=code, headers={"Location": location})
 
     def render(self, result: Result):
+        if isinstance(result, (dict, type(None))):
+            if self.template is None:
+                raise ValueError(
+                    "{self} returned a namespace but does "
+                    "not define a template")
+            if result is None:
+                ns = self.namespace()
+            else:
+                ns = self.namespace(**result)
+            return self.request.app.ui.response(self.template, **ns)
+
         if isinstance(result, Response):
             return result
+
         if isinstance(result, str):
             return Response.create(body=result)
+
         if isinstance(result, tuple):
             if len(result) == 1:
                 return Response.create(body=result[0])
@@ -46,15 +59,7 @@ class View:
             if len(result) == 3:
                 body, code, headers = result
                 return Response.create(body=body, code=code, headers=headers)
-            raise ValueError("Can't interpret return")
-        if isinstance(result, dict):
-            if self.template is None:
-                raise ValueError(
-                    "{self} returned a namespace but does "
-                    "not define a template")
-            ns = self.namespace(**result)
-            return self.request.app.ui.response(self.template, **ns)
-        return self
+        raise ValueError("Can't interpret return")
 
     def __call__(self):
         if worker := getattr(self, self.method, None):
