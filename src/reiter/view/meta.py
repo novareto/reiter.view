@@ -29,6 +29,9 @@ class View:
             **extra
         }
 
+    def redirect(self, location, code=302):
+        return Response.create(code=code, headers={"Location": location})
+
     def render(self, result: Result):
         if isinstance(result, Response):
             return result
