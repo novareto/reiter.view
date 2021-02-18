@@ -15,8 +15,9 @@ class View:
 
     template = None
 
-    def __init__(self, request: Overhead):
+    def __init__(self, request: Overhead, **params):
         self.request = request
+        self.params = params
         self.method = request.environ['REQUEST_METHOD'].upper()
 
     def update(self):
@@ -68,8 +69,8 @@ class View:
         raise HTTPError(405)
 
     @classmethod
-    def resolve(cls, request: Overhead):
-        inst = cls(request)
+    def resolve(cls, request: Overhead, **params):
+        inst = cls(request, **params)
         return inst()
 
 
