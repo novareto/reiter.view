@@ -31,7 +31,7 @@ class View:
         }
 
     def redirect(self, location, code=302):
-        return Response.create(code=code, headers={"Location": location})
+        return Response.redirect(location, code=code)
 
     def render(self, result: Result):
         if isinstance(result, (dict, type(None))):
