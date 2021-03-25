@@ -33,7 +33,12 @@ class View:
     def redirect(self, location, code=302):
         return Response.redirect(location, code=code)
 
-    def render(self, result: Result):
+    def render(self, result: Result, raw=False, layout=...):
+        if isinstance(result, str):
+            if raw:
+                return result
+            return Response.create(body=result)
+
         if isinstance(result, (dict, type(None))):
             if self.template is None:
                 raise ValueError(
@@ -43,29 +48,37 @@ class View:
                 ns = self.namespace()
             else:
                 ns = self.namespace(**result)
-            return self.request.app.ui.response(self.template, **ns)
-
-        if isinstance(result, Response):
-            return result
-
-        if isinstance(result, str):
-            return Response.create(body=result)
+            if raw:
+                return self.request.app.ui.render(
+                    self.template, layout=layout, **ns)
+            return self.request.app.ui.response(
+                self.template, layout=layout, **ns)
 
         if isinstance(result, tuple):
             if len(result) == 1:
-                return Response.create(body=result[0])
-            if len(result) == 2:
+                body = result[0]
+                code = 200
+                headers = None
+            elif len(result) == 2:
                 body, code = result
-                return Response.create(body=body, code=code)
-            if len(result) == 3:
+                headers = None
+            elif len(result) == 3:
                 body, code, headers = result
-                return Response.create(body=body, code=code, headers=headers)
+            if raw:
+                return body
+            return Response.create(body=body, code=code, headers=headers)
+
+        if isinstance(result, Response):
+            if raw:
+                raise ValueError('The view returned a Response object.')
+            return result
+
         raise ValueError("Can't interpret return")
 
-    def __call__(self):
+    def __call__(self, raw=False, layout=...):
         if worker := getattr(self, self.method, None):
             self.update()
-            return self.render(worker())
+            return self.render(worker(), raw=raw, layout=layout)
         raise HTTPError(405)
 
     @classmethod
