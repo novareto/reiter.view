@@ -1,14 +1,14 @@
 import inspect
-from typing import Callable, Generator, Tuple, Union, Dict
-from horseman.definitions import METHODS
+from typing import Callable, Generator, Tuple, Union, Dict, get_args
 from horseman.http import HTTPError
 from horseman.meta import Overhead
 from horseman.response import Response
-from horseman.prototyping import WSGICallable, HTTPMethod
+from horseman.types import WSGICallable, HTTPMethod
 
 
 Endpoint = Callable[[Overhead], WSGICallable]
 Result = Union[str, Dict, Tuple, Response]
+METHODS = frozenset(get_args(HTTPMethod))
 
 
 class View:
