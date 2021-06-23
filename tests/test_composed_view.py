@@ -1,6 +1,6 @@
 import pytest
 from horseman.http import HTTPError
-from reiter.view.meta import View
+from reiter.view.meta import APIView
 from reiter.view.composed import ComposedView
 
 
@@ -44,7 +44,7 @@ class TestComposedView:
     def test_page_decorator(self, environ):
 
         @PersonView.pages.register(name='biography')
-        class Biography(View):
+        class Biography(APIView):
 
             def render(self):
                 return "This is my life"
@@ -64,13 +64,13 @@ class TestComposedView:
         request.query['page'] = ['biography']
 
         @PersonView.pages.register(name='biography')
-        class Biography(View):
+        class Biography(APIView):
 
             def GET(self):
                 return "This is my life"
 
         @PersonView.pages.register(name='CV')
-        class CuriculumVitae(View):
+        class CuriculumVitae(APIView):
 
             def GET(self):
                 return "This is my CV"

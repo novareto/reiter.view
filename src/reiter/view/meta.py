@@ -1,5 +1,5 @@
-import wrapt
-from typing import Callable, Union, Dict
+from abc import ABC, abstractmethod
+from typing import Callable, Union, Dict, Any
 from horseman.http import HTTPError
 from horseman.meta import Overhead
 from horseman.response import Response
@@ -10,22 +10,7 @@ Endpoint = Callable[[Overhead], WSGICallable]
 Result = Union[str, Dict, Response, None]
 
 
-@wrapt.decorator
-def response_wrapper(wrapped, instance, args, kwargs):
-    raw = kwargs.get('raw', False)
-    result: Result = wrapped(*args, **kwargs)
-    if raw or isinstance(result, Response):
-        return result
-
-    if isinstance(result, str):
-        return Response.create(body=result)
-
-    raise ValueError("Can't interpret return")
-
-
 class View:
-
-    template = None
 
     @classmethod
     def resolve(cls, request: Overhead, **params):
@@ -35,13 +20,21 @@ class View:
     def __init__(self, request: Overhead, **params):
         self.request = request
         self.params = params
-        self.method: HTTPMethod = request.environ['REQUEST_METHOD'].upper()
+
+    def update(self):
+        pass
 
     def redirect(self, location, code=302):
         return Response.redirect(location, code=code)
 
-    def update(self):
-        pass
+    def __call__(self, **kwargs):
+        raise NotImplementedError('Override in your own subclass.')
+
+
+class APIView(View):
+    """View using the HTTP Method to find
+    """
+    template = None
 
     def namespace(self, **extra):
         return {
@@ -50,19 +43,33 @@ class View:
             **extra
         }
 
-    @response_wrapper
-    def render(self, result: Result, **kwargs):
-        if self.template is None or \
-            not isinstance(result, (dict, type(None))):
-               return result
-        if result is None:
-            ns = self.namespace()
-        else:
-            ns = self.namespace(**result)
-        return self.template.render(**ns)
+    def render(self, result: Any, **kwargs):
+        if isinstance(result, Response):
+            return result
+
+        raw = kwargs.get('raw', False)
+        if isinstance(result, str) and not raw:
+            return Response.create(200, body=result)
+
+        if isinstance(result, (dict, type(None))):
+            if self.template is not None:
+                if result is None:
+                    ns = self.namespace()
+                else:
+                    ns = self.namespace(**result)
+                result = self.template.render(**ns)
+                if not raw:
+                    return Response.create(200, body=result)
+
+        if raw:
+            return result
+        raise ValueError(
+            f"Can't render. The returned value is : {result!r}."
+        )
 
     def __call__(self, **kwargs):
-        if worker := getattr(self, self.method, None):
+        method: HTTPMethod = self.request.environ['REQUEST_METHOD'].upper()
+        if worker := getattr(self, method, None):
             self.update()
             return self.render(worker(), **kwargs)
         raise HTTPError(405)

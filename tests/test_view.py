@@ -1,7 +1,7 @@
 import pytest
 from horseman.response import reply, Response
 from horseman.http import HTTPError
-from reiter.view.meta import View
+from reiter.view.meta import APIView
 
 
 class FakeTemplate:
@@ -11,7 +11,7 @@ class FakeTemplate:
         return f"This is my template and the namespace has keys: {keys}."
 
 
-class MyView(View):
+class MyView(APIView):
 
     def GET(self):
         return 'This is my GET body'
@@ -37,7 +37,6 @@ class TestView:
     def test_view_instanciation(self, request_class, environ):
         request = request_class(environ)
         view = MyView(request, key="value", foo="bar")
-        assert view.method == 'GET'
         assert view.request is request
         assert view.params == {
             'key': 'value',
@@ -80,7 +79,9 @@ class TestView:
         view = MyView(request)
         with pytest.raises(ValueError) as exc:
             view()
-        assert str(exc.value) == "Can't interpret return"
+        assert str(exc.value) == (
+            "Can't render. The returned value is : {'Some': 'info'}."
+        )
 
     def test_view_raw(self, request_class, environ):
         request = request_class(environ)
