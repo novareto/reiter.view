@@ -6,23 +6,25 @@ version = "0.1"
 
 install_requires = [
     'horseman',
+    'wrapt',
 ]
 
 test_requires = [
     'WebTest',
+    'pytest',
+    'frozendict',
 ]
-
 
 setup(
     name='reiter.view',
     version=version,
     author='Souheil CHELFOUH',
     author_email='trollfot@gmail.com',
-    url='http://gitweb.dolmen-project.org',
-    download_url='http://pypi.python.org/pypi/reiter.view',
     description='View implementation for Horseman',
-    long_description=(open("README.txt").read() + "\n" +
-                      open(os.path.join("docs", "HISTORY.txt")).read()),
+    long_description=(
+        open("README.txt").read() + "\n" +
+        open(os.path.join("docs", "HISTORY.txt")).read()
+    ),
     license='ZPL',
     classifiers=[
         'Environment :: Web Environment',

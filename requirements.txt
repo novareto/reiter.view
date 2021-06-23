@@ -1,1 +1,1 @@
-git+git@github.com:trollfot/horseman.git#egg=horseman
+git+https://github.com/HorsemanWSGI/horseman.git#egg=horseman
