@@ -49,7 +49,7 @@ class APIView(View):
 
         raw = kwargs.get('raw', False)
         if isinstance(result, str) and not raw:
-            return Response.create(200, body=result)
+            return Response(200, body=result)
 
         if isinstance(result, (dict, type(None))):
             if self.template is not None:
@@ -59,7 +59,7 @@ class APIView(View):
                     ns = self.namespace(**result)
                 result = self.template.render(**ns)
                 if not raw:
-                    return Response.create(200, body=result)
+                    return Response(200, body=result)
 
         if raw:
             return result
